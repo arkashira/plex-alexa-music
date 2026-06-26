@@ -1,49 +1,38 @@
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
+import urllib.parse
 
 @dataclass
-class Room:
+class Playlist:
     name: str
-    devices: List[str]
+    tracks: List[str]
 
-@dataclass
-class MusicControl:
-    rooms: List[Room]
+class PlexAlexaMusic:
+    def __init__(self, playlists: Dict[str, Playlist]):
+        self.playlists = playlists
 
-    def control_music(self, room_name: str, action: str):
-        room = next((r for r in self.rooms if r.name == room_name), None)
-        if room:
-            if action == "play":
-                return f"Playing music in {room_name}"
-            elif action == "pause":
-                return f"Pausing music in {room_name}"
-            elif action == "stop":
-                return f"Stopping music in {room_name}"
-            else:
-                raise ValueError("Invalid action")
-        else:
-            raise ValueError("Room not found")
+    def get_playlist(self, name: str) -> Playlist:
+        return self.playlists.get(name)
 
-    def add_room(self, room_name: str, devices: List[str]):
-        self.rooms.append(Room(room_name, devices))
+    def resolve_playlist_to_url(self, playlist: Playlist) -> str:
+        # Simulate resolving a playlist to a valid LAN streaming URL
+        # In a real implementation, this would involve querying a Plex server
+        return f"http://localhost:8080/playlist/{urllib.parse.quote(playlist.name)}"
 
-    def remove_room(self, room_name: str):
-        self.rooms = [r for r in self.rooms if r.name != room_name]
+    def handle_play_music_intent(self, intent: Dict[str, str]) -> str:
+        playlist_name = intent.get("playlist_name")
+        if not playlist_name:
+            return "Sorry, I didn't understand which playlist you wanted to play."
 
-    def get_rooms(self):
-        return [r.name for r in self.rooms]
+        playlist = self.get_playlist(playlist_name)
+        if not playlist:
+            return f"Sorry, I couldn't find a playlist named '{playlist_name}'."
 
-    def integrate_plex_emby(self):
-        # Simulate Plex/Emby integration
-        return "Plex/Emby integration successful"
+        url = self.resolve_playlist_to_url(playlist)
+        return f"Playing '{playlist_name}' from your Plex library. {url}"
 
-    def control_music_in_multiple_rooms(self, room_names: List[str], action: str):
-        results = []
-        for room_name in room_names:
-            try:
-                result = self.control_music(room_name, action)
-                results.append(result)
-            except ValueError as e:
-                results.append(str(e))
-        return results
+    def get_audio_stream(self, url: str) -> str:
+        # Simulate getting an audio stream from a URL
+        # In a real implementation, this would involve streaming audio from a Plex server
+        return f"Streaming audio from {url}"
